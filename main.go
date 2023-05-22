@@ -31,7 +31,7 @@ func main() {
 	flag.BoolVar(&isSplit, "t", false, "Split the file into chunks")
 	flag.StringVar(&filename, "f", "", "Filename")
 	flag.IntVar(&chunkSize, "s", 10, "Chunk size in MB")
-	flag.BoolVar(&verbose, "h", false, "Print file hash values")
+	flag.BoolVar(&verbose, "m", false, "Print file hash values")
 	// parsing flags
 	versionFlag := flag.Bool("v", false, "Show the app version")
 	flag.Parse()

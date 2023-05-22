@@ -4,9 +4,9 @@ GOBUILD=$(GOCMD) build -ldflags '-w -s'
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
-BINARY_NAME=iam
-IMAGE_NAME=iam
-VERSION=latest
+BINARY_NAME=file_sli
+IMAGE_NAME=file_sli
+VERSION=2.0.0
 
 all: test build
 build:
