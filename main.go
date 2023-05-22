@@ -17,14 +17,31 @@ type FileData struct {
 	SHA256 string `json:"SHA256"`
 }
 
+var (
+	version   string = "2.0.0"
+	buildTime string = ""
+	arch      string = ""
+)
+
 func main() {
 	var isSplit bool
 	var filename string
 	var chunkSize int
+	var verbose bool
 	flag.BoolVar(&isSplit, "t", false, "Split the file into chunks")
 	flag.StringVar(&filename, "f", "", "Filename")
 	flag.IntVar(&chunkSize, "s", 10, "Chunk size in MB")
+	flag.BoolVar(&verbose, "h", false, "Print file hash values")
+	// parsing flags
+	versionFlag := flag.Bool("v", false, "Show the app version")
 	flag.Parse()
+
+	if *versionFlag {
+		fmt.Println("Version:", version)
+		fmt.Println("Build Time:", buildTime)
+		fmt.Println("System Architecture:", arch)
+		return
+	}
 
 	if filename == "" {
 		fmt.Println("Please specify a filename")
@@ -38,8 +55,14 @@ func main() {
 			fmt.Printf("Error splitting file: %v\n", err)
 			return
 		}
+	} else if verbose {
+		err = printFileHash(filename)
+		if err != nil {
+			fmt.Printf("Error sum file hash: %v\n", err)
+			return
+		}
 	} else {
-		err = recoverFile(filename)
+		err = recoverFile(filename, verbose)
 		if err != nil {
 			fmt.Printf("Error recovering file: %v\n", err)
 			return
@@ -88,6 +111,9 @@ func splitFile(filename string, chunkSize int) error {
 		return err
 	}
 
+	// Print file hash values if verbose mode is on
+	fmt.Printf("MD5: %s\nSHA1: %s\nSHA256: %s\n", md5Hash, sha1Hash, sha256Hash)
+
 	// Reset file pointer to start of file
 	_, err = file.Seek(0, io.SeekStart)
 	if err != nil {
@@ -129,7 +155,7 @@ func splitFile(filename string, chunkSize int) error {
 	return nil
 }
 
-func recoverFile(filename string) error {
+func recoverFile(filename string, verbose bool) error {
 	// Open JSON file to get file data
 	jsonFile, err := os.Open(filename + ".json")
 	if err != nil {
@@ -189,6 +215,31 @@ func recoverFile(filename string) error {
 	// Print verification result to console
 	fmt.Println("File verification successful!")
 
+	// Print file hash values if verbose mode is on
+	if verbose {
+		fmt.Printf("MD5: %s\nSHA1: %s\nSHA256: %s\n", fileData.MD5, fileData.SHA1, fileData.SHA256)
+	}
+
+	return nil
+}
+
+func printFileHash(filename string) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	var md5Hash, sha1Hash, sha256Hash string
+	md5Hash, sha1Hash, sha256Hash, err = getFileHashes(file)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("MD5:", md5Hash)
+	fmt.Println("SHA-1", sha1Hash)
+	fmt.Println("SHA-256", sha256Hash)
+
 	return nil
 }
 
@@ -205,5 +256,9 @@ func getFileHashes(file *os.File) (string, string, string, error) {
 	}
 
 	// Return hash values as strings
-	return fmt.Sprintf("%x", md5Hash.Sum(nil)), fmt.Sprintf("%x", sha1Hash.Sum(nil)), fmt.Sprintf("%x", sha256Hash.Sum(nil)), nil
+	md5Value := fmt.Sprintf("%x", md5Hash.Sum(nil))
+	sha1Value := fmt.Sprintf("%x", sha1Hash.Sum(nil))
+	sha256Value := fmt.Sprintf("%x", sha256Hash.Sum(nil))
+
+	return md5Value, sha1Value, sha256Value, nil
 }
